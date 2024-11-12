@@ -1,0 +1,5 @@
+{   
+    "temperature":0.5,
+    "base_temperature":0.5,
+    "shift_coe":0.5
+}

@@ -1,0 +1,10 @@
+{   
+    "optimizer":"adam",
+    "lr":0.01,
+    "decay_step":100,
+    "decay_rate":0.01,
+    "momentum":0.0,
+    "max_iteration":300,
+    "supervised_loss_weight":0.5,
+    "save_directory":"../result/example/"
+}

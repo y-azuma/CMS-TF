@@ -1,0 +1,4 @@
+{   
+    "save_log_path":"../log/app.log",
+    "save_log_level": "debug"
+}

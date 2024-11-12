@@ -1,0 +1,9 @@
+{   
+    "dataset":"cifar100",
+    "cycle_length": 4,
+    "input_size":32,
+    "input_channel":3,
+    "batch_size":64,
+    "unlabeled_ratio":0.1,
+    "crop_pct": 0.8
+}

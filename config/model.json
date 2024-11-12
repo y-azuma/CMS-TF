@@ -1,0 +1,6 @@
+{   
+    "model_name":"vit_tiny_patch16_224",
+    "trainable_layer":4,
+    "hidden_dimension":1024,
+    "output_dimension":256
+}
