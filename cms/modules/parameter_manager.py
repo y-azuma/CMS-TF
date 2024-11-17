@@ -17,6 +17,7 @@ class DatasetParam:
     batch_size: int
     unlabeled_ratio:float
     crop_pct: float
+    num_clustering_train:int
     
 @dataclass_json
 @dataclasses.dataclass(frozen=True)

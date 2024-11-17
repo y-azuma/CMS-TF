@@ -47,7 +47,7 @@ def main(args):
     # ------------------
     # dataset
     # ------------------
-    dataloader = CMSDataloader(config=dataset_param,drop_label=False)
+    dataloader = CMSDataloader(config=dataset_param,num_train=dataset_param.num_clustering_train,drop_label=False)
     memory_ds = dataloader.make_memory_dataset(is_train_augmentation=False) # drop_remainder=False, not repeated
     test_ds = dataloader.make_test_dataset(test_batch_size=dataset_param.batch_size)
     
