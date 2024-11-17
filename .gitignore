@@ -1,0 +1,19 @@
+# build
+build/
+example_package.egg-info/
+
+# log
+log/
+
+# set up
+setup.py
+
+# bash
+bash/
+build.sh
+docker.sh
+
+# result
+result/
+
+

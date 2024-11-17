@@ -7,5 +7,5 @@
     "max_iteration":30,
     "supervised_loss_weight":0.5,
     "num_clusters":[100,10],
-    "save_directory":"../result/example2/"
+    "save_directory":"../result/test/"
 }
