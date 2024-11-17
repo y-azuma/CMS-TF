@@ -43,5 +43,6 @@ class TrainParam:
     decay_rate:float
     momentum:float
     max_iteration:int
+    num_clusters:list
     save_directory:str
     supervised_loss_weight:float

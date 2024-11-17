@@ -1,10 +1,11 @@
 {   
     "optimizer":"adam",
-    "lr":0.01,
+    "lr":0.02,
     "decay_step":100,
-    "decay_rate":0.01,
+    "decay_rate":0.05,
     "momentum":0.0,
-    "max_iteration":300,
+    "max_iteration":30,
     "supervised_loss_weight":0.5,
-    "save_directory":"../result/example/"
+    "num_clusters":[100,10],
+    "save_directory":"../result/example2/"
 }

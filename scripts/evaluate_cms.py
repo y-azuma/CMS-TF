@@ -10,7 +10,8 @@ from cms.modules.parameter_manager import LogParam,DatasetParam,ModelParam,LossP
 from cms.modules.logger_manager import Logger
 from cms.dataloader.dataloader import CMSDataloader
 from cms.models.model import ProjectionHead, CMSModel
-from cms.models.trainer import MeanShiftContrastiveTrainer
+from cms.models.trainer import MeanShiftContrastiveEvaluator
+
 
 
 def parse_args():
@@ -24,7 +25,6 @@ def parse_args():
     parser.add_argument("--train_config", type=str, default="../config/train.json")
     
     return parser.parse_args()
-
 
 def main(args):
     
@@ -47,11 +47,9 @@ def main(args):
     # ------------------
     # dataset
     # ------------------
-    dataloader = CMSDataloader(config=dataset_param)
-    epoch_iteration = dataloader.epoch_iteration
-    train_ds = dataloader.make_train_dataset(is_train_augmentation=True)
-    memory_ds = dataloader.make_memory_dataset(is_train_augmentation=True) # drop_remainder=False, not repeated
-    test_ds = dataloader.make_test_dataset(test_batch_size=1)
+    dataloader = CMSDataloader(config=dataset_param,num_train=500,drop_label=False)
+    memory_ds = dataloader.make_memory_dataset(is_train_augmentation=False) # drop_remainder=False, not repeated
+    test_ds = dataloader.make_test_dataset(test_batch_size=dataset_param.batch_size)
     
     # ------------------
     # model
@@ -62,17 +60,18 @@ def main(args):
     model.build(
         input_shape=(None, dataset_param.input_size, dataset_param.input_size, dataset_param.input_channel)
     )
-    # set fine-tuning layer
-    model.encoder.trainable=False
-    for layer in model.encoder.layers[-model_param.trainable_layer:]:
-        layer.trainable=True
+
+    # load weights
+    logger.log("debug","load weights {path}".format(path=str(Path(train_param.save_directory).joinpath("cms_model.h5"))))
+    model.load_weights(str(Path(train_param.save_directory).joinpath("cms_model.h5")))
     
     # ------------------
     # train    
     # ------------------
-    trainer = MeanShiftContrastiveTrainer(model=model,config=train_param,batch_size=dataset_param.batch_size,logger=logger, train_metrics=[["train/loss"]])
+    trainer = MeanShiftContrastiveEvaluator(model=model,config=train_param,batch_size=dataset_param.batch_size,logger=logger, train_metrics=[["test/accuracy1"],["test/accuracy2"]])
     trainer._set_loss_condition(loss_config=loss_param)
-    trainer.run(train_ds,memory_ds,train_param.max_iteration,epoch_iteration)
+    trainer.run(memory_ds,test_ds,num_clusters=train_param.num_clusters)
+    
     
 if __name__ == "__main__":
     args =parse_args()

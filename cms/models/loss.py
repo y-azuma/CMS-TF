@@ -1,5 +1,5 @@
-import tensorflow as tf
 from abc import ABCMeta, abstractmethod
+import tensorflow as tf
 from tensorflow.keras.losses import SparseCategoricalCrossentropy, Reduction
 import numpy as np
 
