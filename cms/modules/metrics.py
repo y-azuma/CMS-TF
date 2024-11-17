@@ -1,4 +1,5 @@
 import numpy as np
+import os
 import matplotlib.pyplot as plt
 from scipy.optimize import linear_sum_assignment as linear_assignment
 from pathlib import Path
@@ -24,7 +25,10 @@ def compute_accuracy(y_true, y_pred):
 
     return total_acc
 
-def plot_scatter(tsne_feature, label,epoch,name:str,save_path:str):
+def plot_scatter(tsne_feature, label,epoch,name:str,save_path:Path):
+    if not os.path.exists(save_path.parent):
+        os.makedirs(save_path.parent)
+    save_path.parent
     # train
     plt.figure(figsize=(10, 8))
     
@@ -37,5 +41,5 @@ def plot_scatter(tsne_feature, label,epoch,name:str,save_path:str):
     plt.colorbar()
 
     # 画像の保存
-    plt.savefig(save_path)
+    plt.savefig(str(save_path))
     plt.close()

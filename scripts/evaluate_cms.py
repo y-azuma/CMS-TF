@@ -60,6 +60,11 @@ def main(args):
     model.build(
         input_shape=(None, dataset_param.input_size, dataset_param.input_size, dataset_param.input_channel)
     )
+    
+    # set fine-tuning layer
+    model.encoder.trainable=False
+    for layer in model.encoder.layers[-model_param.trainable_layer:]:
+        layer.trainable=True
 
     # load weights
     logger.log("debug","load weights {path}".format(path=str(Path(train_param.save_directory).joinpath("cms_model.h5"))))

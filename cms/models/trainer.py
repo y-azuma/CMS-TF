@@ -299,8 +299,8 @@ class MeanShiftContrastiveEvaluator(BaseTrainer):
         test_tsne = tsne_results[split_indices:]
         
         # train
-        plot_scatter(memory_tsne,memory_label,epoch=epoch, name="Train",save_path=str(Path(self.config.save_directory).joinpath('tsne/tsne_train_epoch_{epoch}.png'.format(epoch=epoch))))
+        plot_scatter(memory_tsne,memory_label,epoch=epoch, name="Train",save_path=Path(self.config.save_directory).joinpath('tsne/tsne_train_epoch_{epoch}.png'.format(epoch=epoch)))
         
         # test
-        plot_scatter(test_tsne,test_label,epoch=epoch, name="Test",save_path=str(Path(self.config.save_directory).joinpath('tsne/tsne_test_epoch_{epoch}.png'.format(epoch=epoch))))
+        plot_scatter(test_tsne,test_label,epoch=epoch, name="Test",save_path=Path(self.config.save_directory).joinpath('tsne/tsne_test_epoch_{epoch}.png'.format(epoch=epoch)))
         
