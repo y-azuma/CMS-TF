@@ -9,7 +9,6 @@ log/
 setup.py
 
 # bash
-bash/
 build.sh
 docker.sh
 
