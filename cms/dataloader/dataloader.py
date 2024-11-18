@@ -3,7 +3,7 @@ import tensorflow as tf
 import numpy as np
 
 from cms.modules.parameter_manager import DatasetParam
-from cms.modules.augmet_manager import train_augment, test_augment
+from cms.modules.augment_manager import train_augment, test_augment
 
 class BaseTrainDataloader(metaclass=ABCMeta):
 
