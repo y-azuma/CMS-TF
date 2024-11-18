@@ -7,11 +7,16 @@ from cms.modules.augmet_manager import train_augment, test_augment
 
 class BaseTrainDataloader(metaclass=ABCMeta):
 
-    def __init__(self, config:DatasetParam,num_train=50000, drop_label=True):
+    def __init__(self, config: DatasetParam, num_train=50000, drop_label=True):
         self.config = config
         self.load_dataset(num_train,drop_label)
         
-    def load_dataset(self, num_train, drop_label ,max_pix=255):
+    def load_dataset(self, num_train: int, drop_label: bool ,max_pix=255):
+        """
+        Args:
+            num_train (int): Number of training samples to use. Default is 50000.
+            drop_label (bool): Whether to drop labels for semi-supervised learning. Default is True.
+        """
         if self.config.dataset == "cifar100":
             x,y =  tf.keras.datasets.cifar100.load_data(label_mode="fine")
             x_train, y_train = x[0][:num_train], x[1][:num_train]
@@ -32,7 +37,25 @@ class BaseTrainDataloader(metaclass=ABCMeta):
         return int(self.train_dataset[0].shape[0]/self.config.batch_size)
     
 class CMSDataloader(BaseTrainDataloader):
-    def make_train_dataset(self, is_train_augmentation):
+    """
+    A data loader class for managing datasets in a training and testing workflow.
+
+    This class extends BaseTrainDataloader and provides methods to create 
+    training, memory, and test datasets while applying appropriate data 
+    augmentations.
+    """
+    
+    def make_train_dataset(self, is_train_augmentation: bool):
+        """
+        Creates a training dataset with optional data augmentation.
+
+        Args:
+            is_train_augmentation (bool): Flag indicating whether to apply training augmentations. 
+
+        Returns:
+            tf.data.Dataset: A TensorFlow dataset ready for training.
+        """
+        
         train_ds = tf.data.Dataset.from_tensor_slices(self.train_dataset)
         train_ds = train_ds.shuffle(train_ds.cardinality())
         map_function = self._augmentation(is_train_augmentation=is_train_augmentation)
@@ -44,6 +67,21 @@ class CMSDataloader(BaseTrainDataloader):
         return train_ds
     
     def make_memory_dataset(self, is_train_augmentation):
+        """
+        Creates a memory dataset with optional data augmentation.
+
+        This dataset is similar to the training dataset but does not repeat 
+        and allows incomplete final batches.
+        
+        Used to calculate the value of mean shift
+
+        Args:
+            is_train_augmentation (bool): Flag indicating whether to apply training augmentations.
+
+        Returns:
+            tf.data.Dataset: A TensorFlow dataset for memory usage.
+        """
+        # without repeat and drop_remainder=False
         memory_ds = tf.data.Dataset.from_tensor_slices(self.train_dataset)
         memory_ds = memory_ds.shuffle(memory_ds.cardinality())
         map_function = self._augmentation(is_train_augmentation=is_train_augmentation)
@@ -54,6 +92,15 @@ class CMSDataloader(BaseTrainDataloader):
         return memory_ds
     
     def make_test_dataset(self, test_batch_size):
+        """
+        Creates a test dataset.
+
+        Args:
+            test_batch_size (int): The batch size to be used for the test dataset.
+
+        Returns:
+            tf.data.Dataset: A TensorFlow dataset ready for testing.
+        """
         test_ds = tf.data.Dataset.from_tensor_slices(self.test_dataset)
         test_ds = test_ds.shuffle(test_ds.cardinality())
         map_function = self._augmentation(is_train_augmentation=False)
@@ -62,13 +109,16 @@ class CMSDataloader(BaseTrainDataloader):
 
         return test_ds
     
-    def _augmentation(self, is_train_augmentation):
+    def _augmentation(self, is_train_augmentation: bool):
+        
         def _map_function(x:tf.TensorArray,y:tf.TensorArray):
+            # Apply train augmentation twice for contrastive learning
             x1 = train_augment(x, self.config)
             x2 = train_augment(x, self.config) 
             return x1, x2, y
         
         def _map_test_function(x:tf.TensorArray,y:tf.TensorArray):
+            # Apply resize-only augmentation
             x1 = test_augment(x, self.config)
             x2 = test_augment(x, self.config)
             return x1, x2, y

@@ -1,16 +1,17 @@
 import logging
 
+from cms.modules.parameter_manager import LogParam
 class Logger(object):
-    def __init__(self, log_config):
+    def __init__(self, log_config:LogParam):
         self.save_log_path = log_config.save_log_path
         self.save_log_level = getattr(logging,log_config.save_log_level.upper(),logging.WARNING)
         self.set_config()
         
     def set_config(self):
-        # ログ設定
+        # Basic configuration for logging to a file
         logging.basicConfig(level=self.save_log_level, format="%(asctime)s - %(levelname)s - %(message)s", filename=self.save_log_path, filemode="a")
 
-        # コンソール出力
+        # Set up console output handler
         console_handler = logging.StreamHandler()
         console_handler.setLevel(logging.DEBUG)
         formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
@@ -18,6 +19,7 @@ class Logger(object):
         logging.getLogger().addHandler(console_handler)
     
     def log(self, log_level:str, message:str):
+        # Call the appropriate method based on the log level
         if log_level == "debug":
             self._debug(message)
         elif log_level == "info":
@@ -32,7 +34,7 @@ class Logger(object):
             error_message = "Error:No such log level :" + str(log_level)
             self._error(error_message)
         
-    def _debug(self, message):
+    def _debug(self, message:str):
         logging.debug(message)
         
     def _info(self, message):
