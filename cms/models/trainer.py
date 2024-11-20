@@ -8,12 +8,14 @@ import time
 from collections import OrderedDict
 from scipy.cluster.hierarchy import linkage, fcluster
 
+from cms.modules.parameter_manager import TrainParam,LossParam
+from cms.modules.logger_manager import Logger
 from cms.models.optimizer import get_optimizer
 from cms.models.loss import SupervisedContrastiveLoss, MeanShiftContrastiveLoss
 from cms.modules.metrics import compute_accuracy,reset_list, plot_scatter
 
 class BaseTrainer(metaclass=ABCMeta):
-    def __init__(self, model, config, batch_size, logger, train_metrics):
+    def __init__(self, model: tf.keras.model, config: TrainParam, batch_size: int, logger: Logger, train_metrics: list):
         
         self.model = model
         self.config = config
@@ -34,9 +36,9 @@ class BaseTrainer(metaclass=ABCMeta):
         lr_schedule=tf.keras.optimizers.schedules.ExponentialDecay(self.config.lr, self.config.decay_step, self.config.decay_rate)
         return get_optimizer(optimizer_name=self.config.optimizer, lr=lr_schedule, momentum=self.config.momentum)
         
-    def _set_metrics(self, metrics, dst="train_metrics"):
-        MeanMetrc = tf.keras.metrics.Mean
-        _metrics = [[met, MeanMetrc(name=met)] if isinstance(met, str) else [met.name, met] for met in metrics]
+    def _set_metrics(self, metrics: list, dst: str = "train_metrics"):
+        MeanMetric = tf.keras.metrics.Mean
+        _metrics = [[met, MeanMetric(name=met)] if isinstance(met, str) else [met.name, met] for met in metrics]
         setattr(self, dst, dict(_metrics))
         
     def _set_writer(self):
@@ -45,14 +47,14 @@ class BaseTrainer(metaclass=ABCMeta):
     def _save_weight(self):
         self.model.save_weights(str(Path(self.config.save_directory).joinpath("cms_model.h5")))
         
-    def _log_train_metrics(self, metrics):
+    def _log_train_metrics(self, metrics: list):
         with self.writer.as_default():
             for name, metric in metrics.items():
                 tf.summary.scalar(name, metric.result(), step=self.iteration)
                 metric.reset_states()
                 
     @abstractmethod
-    def run(self, dataset, iteration):
+    def run(self, dataset: tf.data.Dataset, iteration: int):
         pass
         
     @property
@@ -63,7 +65,7 @@ class BaseTrainer(metaclass=ABCMeta):
     def lr(self):
         return self.optimizer.learning_rate.numpy()
     
-    def _calculate_mean_shifted_value(self, feature, memory_feature, k_cluster=9):
+    def _calculate_mean_shifted_value(self, feature: tf.Tensor, memory_feature: tf.Tensor, k_cluster: int = 9):
         class_wise_sim = tf.einsum("b d, n d -> b n", feature, memory_feature)
         _, indices = tf.math.top_k(class_wise_sim, k=k_cluster, sorted=True)
         indices = indices[:,1:]
@@ -78,17 +80,17 @@ class BaseTrainer(metaclass=ABCMeta):
         
         return knn_emb
     
-    def _generate_memory_tensor(self, dataset, max_iteration=0):
+    def _generate_memory_tensor(self, dataset: tf.data.Dataset, max_iteration: int = 0):
         if max_iteration == 0:
             max_iteration = tf.data.experimental.cardinality(dataset).numpy()
         return self._concat_tensors(self._run_encode_step(dataset=dataset,training=False),max_iteration=max_iteration)
     
-    def _run_encode_step(self, dataset, training=False):
+    def _run_encode_step(self, dataset: tf.data.Dataset, training: bool = False):
         for tensors in dataset:
             yield self._encode_step(tensors, training=training)
     
     @tf.function()
-    def _encode_step(self, tensor, training):
+    def _encode_step(self, tensor: tf.Tensor, training: bool):
         x1, x2, y = tensor
         feature1 = self.model(x1, training=training)
         feature2 = self.model(x2, training=training)
@@ -97,7 +99,7 @@ class BaseTrainer(metaclass=ABCMeta):
         
         return feature1, feature2, y
     
-    def _concat_tensors(self, datasets, max_iteration):
+    def _concat_tensors(self, datasets: tf.data.dataset, max_iteration: int):
         tensors_list = []
         with tqdm(datasets,total=max_iteration,leave=False,ncols=100) as pbar:
             for i, tensors in enumerate(pbar):
@@ -121,17 +123,17 @@ class BaseTrainer(metaclass=ABCMeta):
             return concat_tensors
     
 class MeanShiftContrastiveTrainer(BaseTrainer):
-    def _set_loss_condition(self, loss_config):
+    def _set_loss_condition(self, loss_config: LossParam):
         self.supervised_loss_func  = SupervisedContrastiveLoss(loss_config)
         self.supervised_loss_func.set_contrastive_loss_condition()
         self.unsupervised_loss_func = MeanShiftContrastiveLoss(loss_config)
         self.unsupervised_loss_func.set_contrastive_loss_condition()
         
         
-    def run(self, dataset,memory_dataset, iteration, epoch_iteration):
+    def run(self, dataset: tf.data.Dataset,memory_dataset: tf.data.Dataset, iteration: int, epoch_iteration: int):
         epoch = 0
         
-        with tqdm(dataset,total=iteration,ncols=150) as pbar:
+        with tqdm(dataset,total=iteration, ncols=150) as pbar:
             for tensors in pbar:
                 pbar.set_description("[Epoch {ep}, iteration {ite}]".format(ep=epoch,ite=self.iteration))
                 pbar.set_postfix(OrderedDict(loss=list(self.train_loss.values())[0].result().numpy()))
@@ -171,7 +173,7 @@ class MeanShiftContrastiveTrainer(BaseTrainer):
 
 
     @tf.function()
-    def _unsupervised_train_step(self, tensors, memory_feature):
+    def _unsupervised_train_step(self, tensors: tf.Tensor, memory_feature: tf.Tensor):
         with tf.GradientTape() as tape:
             x1, x2, _ = tensors
             feature1 = self.model(x1)
@@ -187,7 +189,7 @@ class MeanShiftContrastiveTrainer(BaseTrainer):
         self.train_loss["train/loss"](total_loss)
         
     @tf.function()
-    def _semi_supervised_train_step(self, tensors, memory_feature, labeled_tensors):
+    def _semi_supervised_train_step(self, tensors: tf.Tensor, memory_feature: tf.Tensor, labeled_tensors: tf.Tensor):
         with tf.GradientTape() as tape:
             x1, x2, _ = tensors
             feature1 = self.model(x1)
@@ -205,17 +207,17 @@ class MeanShiftContrastiveTrainer(BaseTrainer):
         self.train_loss["train/loss"](total_loss)
 
 class MeanShiftContrastiveEvaluator(BaseTrainer):
-    def _set_loss_condition(self, loss_config):
+    def _set_loss_condition(self, loss_config: LossParam):
         self.loss_func = MeanShiftContrastiveLoss(loss_config)
         self.loss_func.set_contrastive_loss_condition()
         
-    def _log_test_metrics(self, metrics,epoch):
+    def _log_test_metrics(self, metrics: list, epoch: int):
         with self.writer.as_default():
             for name, metric in metrics.items():
                 tf.summary.scalar(name, metric.result(), step=epoch)
                 metric.reset_states()
     
-    def run(self, memory_dataset,test_dataset, num_clusters):
+    def run(self, memory_dataset: tf.data.Dataset, test_dataset: tf.data.Dataset, num_clusters: int):
         epoch = 0
         continue_clustering = True
 
@@ -283,14 +285,14 @@ class MeanShiftContrastiveEvaluator(BaseTrainer):
                 
             epoch += 1
     
-    def _mean_shifted_step(self,mean_shifted_features):
+    def _mean_shifted_step(self, mean_shifted_features: tf.Tensor):
         knn_emb = self._calculate_mean_shifted_value(mean_shifted_features, mean_shifted_features)
         shifted_batch = self.loss_func._mean_shift(mean_shifted_features, knn_emb)
         output_batch  = tf.math.l2_normalize(shifted_batch, axis=1)
         
         return output_batch
     
-    def _visualize_tsne(self, features, memory_label, test_label, split_indices, epoch):
+    def _visualize_tsne(self, features: tf.Tensor, memory_label: tf.Tensor, test_label: tf.Tensor, split_indices: int, epoch: int):
         # t-SNE
         tsne = TSNE(n_components=2, random_state=123)
         tsne_results = tsne.fit_transform(features)

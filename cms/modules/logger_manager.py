@@ -2,7 +2,7 @@ import logging
 
 from cms.modules.parameter_manager import LogParam
 class Logger(object):
-    def __init__(self, log_config:LogParam):
+    def __init__(self, log_config: LogParam):
         self.save_log_path = log_config.save_log_path
         self.save_log_level = getattr(logging,log_config.save_log_level.upper(),logging.WARNING)
         self.set_config()
@@ -18,7 +18,7 @@ class Logger(object):
         console_handler.setFormatter(formatter)
         logging.getLogger().addHandler(console_handler)
     
-    def log(self, log_level:str, message:str):
+    def log(self, log_level: str, message: str):
         # Call the appropriate method based on the log level
         if log_level == "debug":
             self._debug(message)
@@ -34,19 +34,19 @@ class Logger(object):
             error_message = "Error:No such log level :" + str(log_level)
             self._error(error_message)
         
-    def _debug(self, message:str):
+    def _debug(self, message: str):
         logging.debug(message)
         
-    def _info(self, message):
+    def _info(self, message: str):
         logging.info(message)
         
-    def _warning(self, message):
+    def _warning(self, message: str):
         logging.warning(message)
         
-    def _error(self, message):
+    def _error(self, message: str):
         logging.error(message)
         
-    def _critical(self, message):
+    def _critical(self, message: str):
         logging.critical(message)
 
         

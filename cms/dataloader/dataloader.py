@@ -7,11 +7,11 @@ from cms.modules.augment_manager import train_augment, test_augment
 
 class BaseTrainDataloader(metaclass=ABCMeta):
 
-    def __init__(self, config: DatasetParam, num_train=50000, drop_label=True):
+    def __init__(self, config: DatasetParam, num_train: int = 50000, drop_label: bool = True):
         self.config = config
         self.load_dataset(num_train,drop_label)
         
-    def load_dataset(self, num_train: int, drop_label: bool ,max_pix=255):
+    def load_dataset(self, num_train: int, drop_label: bool ,max_pix: int = 255):
         """
         Args:
             num_train (int): Number of training samples to use. Default is 50000.
@@ -66,7 +66,7 @@ class CMSDataloader(BaseTrainDataloader):
 
         return train_ds
     
-    def make_memory_dataset(self, is_train_augmentation):
+    def make_memory_dataset(self, is_train_augmentation: bool):
         """
         Creates a memory dataset with optional data augmentation.
 
@@ -91,7 +91,7 @@ class CMSDataloader(BaseTrainDataloader):
 
         return memory_ds
     
-    def make_test_dataset(self, test_batch_size):
+    def make_test_dataset(self, test_batch_size: int):
         """
         Creates a test dataset.
 
@@ -111,13 +111,13 @@ class CMSDataloader(BaseTrainDataloader):
     
     def _augmentation(self, is_train_augmentation: bool):
         
-        def _map_function(x:tf.TensorArray,y:tf.TensorArray):
+        def _map_function(x: tf.Tensor,y: tf.Tensor):
             # Apply train augmentation twice for contrastive learning
             x1 = train_augment(x, self.config)
             x2 = train_augment(x, self.config) 
             return x1, x2, y
         
-        def _map_test_function(x:tf.TensorArray,y:tf.TensorArray):
+        def _map_test_function(x: tf.Tensor,y: tf.Tensor):
             # Apply resize-only augmentation
             x1 = test_augment(x, self.config)
             x2 = test_augment(x, self.config)
