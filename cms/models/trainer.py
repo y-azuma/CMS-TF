@@ -130,7 +130,7 @@ class MeanShiftContrastiveTrainer(BaseTrainer):
         self.unsupervised_loss_func.set_contrastive_loss_condition()
         
         
-    def run(self, dataset: tf.data.Dataset,memory_dataset: tf.data.Dataset, iteration: int, epoch_iteration: int):
+    def run(self, dataset: tf.data.Dataset, memory_dataset: tf.data.Dataset, iteration: int, epoch_iteration: int):
         epoch = 0
         
         with tqdm(dataset,total=iteration, ncols=150) as pbar:
