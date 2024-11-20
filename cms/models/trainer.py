@@ -15,7 +15,7 @@ from cms.models.loss import SupervisedContrastiveLoss, MeanShiftContrastiveLoss
 from cms.modules.metrics import compute_accuracy,reset_list, plot_scatter
 
 class BaseTrainer(metaclass=ABCMeta):
-    def __init__(self, model: tf.keras.model, config: TrainParam, batch_size: int, logger: Logger, train_metrics: list):
+    def __init__(self, model: tf.keras.Model, config: TrainParam, batch_size: int, logger: Logger, train_metrics: list):
         
         self.model = model
         self.config = config
@@ -99,7 +99,7 @@ class BaseTrainer(metaclass=ABCMeta):
         
         return feature1, feature2, y
     
-    def _concat_tensors(self, datasets: tf.data.dataset, max_iteration: int):
+    def _concat_tensors(self, datasets: tf.data.Dataset, max_iteration: int):
         tensors_list = []
         with tqdm(datasets,total=max_iteration,leave=False,ncols=100) as pbar:
             for i, tensors in enumerate(pbar):
