@@ -6,9 +6,23 @@ from pathlib import Path
 from typing import List
 
 def reset_list(num: int) -> List[int]:
+    """
+    Generate a list initialized with zeros of the specified length.
+    """
     return [0 for _ in range(num)]
 
 def compute_accuracy(y_true: np.ndarray, y_pred: np.ndarray) -> float:
+    """
+    Calculate the accuracy between predicted labels and true labels.
+    This function finds the best matching considering label permutations.
+
+    Args:
+        y_true (np.ndarray): Array of true labels
+        y_pred (np.ndarray): Array of predicted labels
+
+    Returns:
+        float: Accuracy (a value between 0 and 1)
+    """
     y_true = y_true.astype(int)
     #old_classes_gt = set(y_true)
 
@@ -27,6 +41,16 @@ def compute_accuracy(y_true: np.ndarray, y_pred: np.ndarray) -> float:
     return total_acc
 
 def plot_scatter(tsne_feature: np.ndarray, label: int, epoch: int, name: str, save_path: Path) -> None:
+    """
+    Plot a scatter plot using t-SNE reduced features and save it.
+
+    Args:
+        tsne_feature (np.ndarray): T-SNE reduced features
+        label (int): Label for each data point
+        epoch (int): Current epoch number
+        name (str): Name or type of the dataset for the plot (e.g., Train)
+        save_path (Path): File path to save the plot
+    """
     if not os.path.exists(save_path.parent):
         os.makedirs(save_path.parent)
     save_path.parent

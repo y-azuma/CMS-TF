@@ -7,16 +7,27 @@ from cms.modules.parameter_manager import DatasetParam
 from cms.modules.augment_manager import train_augment, test_augment
 
 class BaseTrainDataloader(metaclass=ABCMeta):
+    """
+    Base class for data loader
+    """
 
     def __init__(self, config: DatasetParam, num_train: int = 50000, drop_label: bool = True):
+        """
+        Args:
+            config (DatasetParam): Configuration parameters for the dataset
+            num_train (int, optional): Number of training samples to use. Default is 5000
+            drop_label (bool, optional): Whether to drop labels for semi-supervised learning. Default is True
+        """
         self.config = config
         self.load_dataset(num_train,drop_label)
         
     def load_dataset(self, num_train: int, drop_label: bool ,max_pix: int = 255) -> None:
         """
+        Load and preprocess the dataset
+        
         Args:
-            num_train (int): Number of training samples to use. Default is 50000.
-            drop_label (bool): Whether to drop labels for semi-supervised learning. Default is True.
+            num_train (int): Number of training samples to use
+            drop_label (bool): Whether to drop labels for semi-supervised learning
         """
         if self.config.dataset == "cifar100":
             x,y =  tf.keras.datasets.cifar100.load_data(label_mode="fine")
@@ -39,7 +50,7 @@ class BaseTrainDataloader(metaclass=ABCMeta):
     
 class CMSDataloader(BaseTrainDataloader):
     """
-    A data loader class for managing datasets in a training and testing workflow.
+    Data loader class for managing datasets in a training and testing workflow.
 
     This class extends BaseTrainDataloader and provides methods to create 
     training, memory, and test datasets while applying appropriate data 
@@ -48,13 +59,13 @@ class CMSDataloader(BaseTrainDataloader):
     
     def make_train_dataset(self, is_train_augmentation: bool) -> tf.data.Dataset:
         """
-        Creates a training dataset with optional data augmentation.
+        Creates a training dataset with optional data augmentation
 
         Args:
-            is_train_augmentation (bool): Flag indicating whether to apply training augmentations. 
+            is_train_augmentation (bool): Flag indicating whether to apply training augmentations
 
         Returns:
-            tf.data.Dataset: A TensorFlow dataset ready for training.
+            tf.data.Dataset: TensorFlow dataset ready for training
         """
         
         train_ds = tf.data.Dataset.from_tensor_slices(self.train_dataset)
@@ -77,10 +88,10 @@ class CMSDataloader(BaseTrainDataloader):
         Used to calculate the value of mean shift
 
         Args:
-            is_train_augmentation (bool): Flag indicating whether to apply training augmentations.
+            is_train_augmentation (bool): Flag indicating whether to apply training augmentations
 
         Returns:
-            tf.data.Dataset: A TensorFlow dataset for memory usage.
+            tf.data.Dataset: TensorFlow dataset for memory usage
         """
         # without repeat and drop_remainder=False
         memory_ds = tf.data.Dataset.from_tensor_slices(self.train_dataset)
@@ -97,10 +108,10 @@ class CMSDataloader(BaseTrainDataloader):
         Creates a test dataset.
 
         Args:
-            test_batch_size (int): The batch size to be used for the test dataset.
+            test_batch_size (int): The batch size to be used for the test dataset
 
         Returns:
-            tf.data.Dataset: A TensorFlow dataset ready for testing.
+            tf.data.Dataset: TensorFlow dataset ready for testing
         """
         test_ds = tf.data.Dataset.from_tensor_slices(self.test_dataset)
         test_ds = test_ds.shuffle(test_ds.cardinality())
@@ -111,6 +122,15 @@ class CMSDataloader(BaseTrainDataloader):
         return test_ds
     
     def _augmentation(self, is_train_augmentation: bool) -> Callable[[tf.Tensor, tf.Tensor], Tuple[tf.Tensor, tf.Tensor, tf.Tensor]]:
+        """
+        Creates an augmentation function
+
+        Args:
+            is_train_augmentation (bool): Flag indicating whether to apply training augmentations
+
+        Returns:
+            Callable: Function that applies the appropriate augmentations to the data.
+        """
         
         def _map_function(x: tf.Tensor,y: tf.Tensor):
             # Apply train augmentation twice for contrastive learning

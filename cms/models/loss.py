@@ -7,7 +7,15 @@ from typing import Tuple
 from cms.modules.parameter_manager import LossParam
 
 class BaseLoss(metaclass=ABCMeta):
+    """
+    Base class for loss functions used in contrastive learning scenarios
+    """
+    
     def __init__(self, config: LossParam):
+        """
+        Args:
+            config (LossParam): Configuration parameters for the loss function
+        """
         self.config = config
         
     @abstractmethod
@@ -15,9 +23,21 @@ class BaseLoss(metaclass=ABCMeta):
         pass
     
     def set_contrastive_loss_condition(self) -> None:
+        """
+        Set up the sparse categorical cross-entropy loss for contrastive learning
+        """
         self._scce = SparseCategoricalCrossentropy(from_logits=True, reduction=Reduction.SUM)
         
     def get_negative_mask(self, batch_size: int) -> tf.Tensor:
+        """
+        Generate a mask for negative samples in contrastive learning
+
+        Args:
+            batch_size (int): The size of the batch
+
+        Returns:
+            tf.Tensor: A boolean mask for negative samples
+        """
         negative_mask = np.ones((batch_size, 2*batch_size), dtype=bool)
         for i in range(batch_size):
             negative_mask[i,i] = 0
@@ -25,6 +45,17 @@ class BaseLoss(metaclass=ABCMeta):
         return tf.constant(negative_mask)
     
     def _calculate_positive_loss(self, feature1: tf.Tensor, feature2: tf.Tensor, batch_size: int) -> tf.Tensor:
+        """
+        Calculate the loss for positive pairs in contrastive learning
+
+        Args:
+            feature1 (tf.Tensor): First augmentation set of features
+            feature2 (tf.Tensor): Second augmentation set of features
+            batch_size (int): The size of the batch
+
+        Returns:
+            tf.Tensor: Positive loss.
+        """
         loss_positive = tf.matmul(tf.expand_dims(feature1, 1), tf.expand_dims(feature2, 2)) #batch, 1, 1
         loss_positive = tf.reshape(loss_positive, (batch_size, 1)) #batch, 1
         loss_positive /= self.config.temperature
@@ -45,10 +76,22 @@ class BaseLoss(metaclass=ABCMeta):
     
 class SupervisedContrastiveLoss(BaseLoss):
     """
-    https://arxiv.org/pdf/2004.11362.pdf
+    Implementation of Supervised Contrastive Loss
+
+    This class implements the supervised contrastive loss as described in https://arxiv.org/pdf/2004.11362
     """
         
     def total_loss(self, model: tf.keras.Model, tensors: Tuple[tf.Tensor, tf.Tensor, tf.Tensor]) -> tf.Tensor: 
+        """
+        Compute the total supervised contrastive loss
+
+        Args:
+            model (tf.keras.Model): Model to compute features.
+            tensors (Tuple[tf.Tensor, tf.Tensor, tf.Tensor]): Input tensors from dataset
+
+        Returns:
+            tf.Tensor: The computed total loss
+        """
 
         x1, x2, y =tensors #(sup_batch, feature) (sup_batch, 1)
         
@@ -84,15 +127,39 @@ class SupervisedContrastiveLoss(BaseLoss):
         return total_loss
 
 class MeanShiftContrastiveLoss(BaseLoss):
-        
+    """
+    Implementation of Mean Shift Contrastive Loss
+
+    This class implements a contrastive loss with mean shift for unsupervised learning
+    """
     def _mean_shift(self, feature: tf.Tensor, con_knn_emb: tf.Tensor) -> tf.Tensor:
+        """
+        Apply mean shift to the input features
+
+        Args:
+            feature (tf.Tensor): Input features.
+            con_knn_emb (tf.Tensor): K-nearest neighbor embeddings
+
+        Returns:
+            tf.Tensor: Mean-shifted features
+        """
         mean_shift_feat = (1-self.config.shift_coe) * feature + self.config.shift_coe*con_knn_emb
         norm = tf.sqrt(tf.reduce_mean(tf.pow(mean_shift_feat, 2), axis=-1, keepdims=True))
         mean_shift_feat = mean_shift_feat/norm
         return mean_shift_feat
     
     def total_loss(self, features: tf.Tensor, batch_size: int, knn_emb: tf.Tensor) -> tf.Tensor:
-        
+        """
+        Compute the total mean shift contrastive loss
+
+        Args:
+            features (tf.Tensor): Input features
+            batch_size (int): The size of the batch
+            knn_emb (tf.Tensor): K-nearest neighbor embeddings
+
+        Returns:
+            tf.Tensor: The computed total loss
+        """
         # Mean Shift
         shifted_batch1 = self._mean_shift(features[0], knn_emb)
         shifted_batch2 = self._mean_shift(features[1], knn_emb)
@@ -101,9 +168,7 @@ class MeanShiftContrastiveLoss(BaseLoss):
         output_batch2  = tf.math.l2_normalize(shifted_batch2, axis=1)
         
         
-        """
-        Unsupervised Contrastive Learning
-        """
+        #Unsupervised Contrastive Learning as described in SimCLR: https://arxiv.org/pdf/2002.05709
         loss_positive = self._calculate_positive_loss(output_batch1, output_batch2, batch_size)
         
         negatives = tf.concat([output_batch2, output_batch1], axis=0)

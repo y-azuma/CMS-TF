@@ -36,15 +36,16 @@ class CustomModel(tf.keras.Model):
     """
     Custom Model.
 
-    A model combining an encoder, projection head, and predictor.
-
-    Attributes:
-        encoder (tf.keras.Model): Encoder model
-        projection_head (tf.keras.Model): Projection head model
-        predictor (tf.keras.Model): Predictor model
+    Model combining an encoder, projection head, and predictor
     """
 
     def __init__(self, encoder: tf.keras.Model, projection_head: tf.keras.Model, predictor: tf.keras.Model):
+        """
+        Args:
+            encoder (tf.keras.Model): Encoder model
+            projection_head (tf.keras.Model): Projection head model
+            predictor (tf.keras.Model): Predictor model
+        """
         super(CustomModel, self).__init__()
         self.encoder = encoder
         self.projection_head = projection_head
@@ -65,15 +66,16 @@ class CustomModel(tf.keras.Model):
     
 class CMSModel(tf.keras.Model):
     """
-    CMS Model.
+    Custom Model for CMS
 
-    A model combining an encoder and projection head.
-
-    Attributes:
-        encoder (tf.keras.Model): Encoder model
-        projection_head (tf.keras.Model): Projection head model
+    Model combining an encoder and projection head
     """
     def __init__(self, encoder: tf.keras.Model, projection_head: tf.keras.Model):
+        """
+        Args:
+            encoder (tf.keras.Model): Encoder model
+            projection_head (tf.keras.Model): Projection head model
+        """
         super(CMSModel, self).__init__()
         self.encoder = encoder
         self.projection_head = projection_head
