@@ -7,7 +7,7 @@ class Logger(object):
         self.save_log_level = getattr(logging,log_config.save_log_level.upper(),logging.WARNING)
         self.set_config()
         
-    def set_config(self):
+    def set_config(self) -> None:
         # Basic configuration for logging to a file
         logging.basicConfig(level=self.save_log_level, format="%(asctime)s - %(levelname)s - %(message)s", filename=self.save_log_path, filemode="a")
 
@@ -18,7 +18,7 @@ class Logger(object):
         console_handler.setFormatter(formatter)
         logging.getLogger().addHandler(console_handler)
     
-    def log(self, log_level: str, message: str):
+    def log(self, log_level: str, message: str) -> None:
         # Call the appropriate method based on the log level
         if log_level == "debug":
             self._debug(message)
@@ -34,19 +34,19 @@ class Logger(object):
             error_message = "Error:No such log level :" + str(log_level)
             self._error(error_message)
         
-    def _debug(self, message: str):
+    def _debug(self, message: str) -> None:
         logging.debug(message)
         
-    def _info(self, message: str):
+    def _info(self, message: str) -> None:
         logging.info(message)
         
-    def _warning(self, message: str):
+    def _warning(self, message: str) -> None:
         logging.warning(message)
         
-    def _error(self, message: str):
+    def _error(self, message: str) -> None:
         logging.error(message)
         
-    def _critical(self, message: str):
+    def _critical(self, message: str) -> None:
         logging.critical(message)
 
         

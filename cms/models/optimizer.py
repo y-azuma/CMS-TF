@@ -1,6 +1,6 @@
-from tensorflow.keras.optimizers import Adam, SGD
+from tensorflow.keras.optimizers import Adam, SGD, Optimizer
 
-def get_optimizer(optimizer_name, lr, momentum):
+def get_optimizer(optimizer_name: str, lr: float, momentum: float)  -> Optimizer:
         
     if optimizer_name=="adam":
         optimizer = Adam(learning_rate=lr, beta_1=momentum)

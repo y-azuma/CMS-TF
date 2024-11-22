@@ -1,7 +1,9 @@
 import tensorflow as tf
+from typing import Callable
 
+from cms.modules.parameter_manager import DatasetParam
 
-def gaussian_blur(image, kernel_size=23, padding='SAME'):
+def gaussian_blur(image: tf.Tensor, kernel_size: int = 23, padding: str = 'SAME') -> tf.Tensor:
     sigma = tf.random.uniform((1,))* 1.9 + 0.1
 
     radius = tf.cast(kernel_size / 2, tf.int32)
@@ -28,7 +30,7 @@ def gaussian_blur(image, kernel_size=23, padding='SAME'):
     return blurred
 
 
-def color_jitter(x, s=0.5):
+def color_jitter(x: tf.Tensor, s: float = 0.5) -> tf.Tensor:
     x = tf.image.random_brightness(x, max_delta=0.8*s)
     x = tf.image.random_contrast(x, lower=1-0.8*s, upper=1+0.8*s)
     x = tf.image.random_saturation(x, lower=1-0.8*s, upper=1+0.8*s)
@@ -36,13 +38,13 @@ def color_jitter(x, s=0.5):
     x = tf.clip_by_value(x, 0, 1)
     return x
 
-def color_drop(x):
+def color_drop(x: tf.Tensor) -> tf.Tensor:
     x = tf.image.rgb_to_grayscale(x)
     x = tf.tile(x, [1, 1, 3])
     return x
 
 
-def random_apply(func, x, p):
+def random_apply(func: Callable[[tf.Tensor], tf.Tensor], x: tf.Tensor, p: float) -> tf.Tensor:
     return tf.cond(
         tf.less(tf.random.uniform([], minval=0, maxval=1, dtype=tf.float32),
                 tf.cast(p, tf.float32)),
@@ -50,7 +52,7 @@ def random_apply(func, x, p):
         lambda: x)
 
 @tf.function
-def train_augment(image, config):
+def train_augment(image: tf.Tensor, config: DatasetParam) -> tf.Tensor:
     h = image.shape[0]
     w = image.shape[1]
     
@@ -68,7 +70,7 @@ def train_augment(image, config):
     return image
 
 @tf.function
-def test_augment(image, config):
+def test_augment(image: tf.Tensor, config: DatasetParam) -> tf.Tensor:
     image = tf.image.convert_image_dtype(image, tf.float32)
     image = tf.image.resize(image, (config.input_size, config.input_size))
     

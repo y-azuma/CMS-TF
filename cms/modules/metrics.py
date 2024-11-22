@@ -3,11 +3,12 @@ import os
 import matplotlib.pyplot as plt
 from scipy.optimize import linear_sum_assignment as linear_assignment
 from pathlib import Path
+from typing import List
 
-def reset_list(num):
+def reset_list(num: int) -> List[int]:
     return [0 for _ in range(num)]
 
-def compute_accuracy(y_true, y_pred):
+def compute_accuracy(y_true: np.ndarray, y_pred: np.ndarray) -> float:
     y_true = y_true.astype(int)
     #old_classes_gt = set(y_true)
 
@@ -25,7 +26,7 @@ def compute_accuracy(y_true, y_pred):
 
     return total_acc
 
-def plot_scatter(tsne_feature, label,epoch,name:str,save_path:Path):
+def plot_scatter(tsne_feature: np.ndarray, label: int, epoch: int, name: str, save_path: Path) -> None:
     if not os.path.exists(save_path.parent):
         os.makedirs(save_path.parent)
     save_path.parent

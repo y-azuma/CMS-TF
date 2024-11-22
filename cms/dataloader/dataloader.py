@@ -1,6 +1,7 @@
 from abc import ABCMeta
 import tensorflow as tf
 import numpy as np
+from typing import Callable, Tuple
 
 from cms.modules.parameter_manager import DatasetParam
 from cms.modules.augment_manager import train_augment, test_augment
@@ -11,7 +12,7 @@ class BaseTrainDataloader(metaclass=ABCMeta):
         self.config = config
         self.load_dataset(num_train,drop_label)
         
-    def load_dataset(self, num_train: int, drop_label: bool ,max_pix: int = 255):
+    def load_dataset(self, num_train: int, drop_label: bool ,max_pix: int = 255) -> None:
         """
         Args:
             num_train (int): Number of training samples to use. Default is 50000.
@@ -33,7 +34,7 @@ class BaseTrainDataloader(metaclass=ABCMeta):
             self.test_dataset  = (x_test, y_test)
             
     @property
-    def epoch_iteration(self):
+    def epoch_iteration(self) -> int:
         return int(self.train_dataset[0].shape[0]/self.config.batch_size)
     
 class CMSDataloader(BaseTrainDataloader):
@@ -45,7 +46,7 @@ class CMSDataloader(BaseTrainDataloader):
     augmentations.
     """
     
-    def make_train_dataset(self, is_train_augmentation: bool):
+    def make_train_dataset(self, is_train_augmentation: bool) -> tf.data.Dataset:
         """
         Creates a training dataset with optional data augmentation.
 
@@ -66,7 +67,7 @@ class CMSDataloader(BaseTrainDataloader):
 
         return train_ds
     
-    def make_memory_dataset(self, is_train_augmentation: bool):
+    def make_memory_dataset(self, is_train_augmentation: bool) -> tf.data.Dataset:
         """
         Creates a memory dataset with optional data augmentation.
 
@@ -91,7 +92,7 @@ class CMSDataloader(BaseTrainDataloader):
 
         return memory_ds
     
-    def make_test_dataset(self, test_batch_size: int):
+    def make_test_dataset(self, test_batch_size: int) -> tf.data.Dataset:
         """
         Creates a test dataset.
 
@@ -109,7 +110,7 @@ class CMSDataloader(BaseTrainDataloader):
 
         return test_ds
     
-    def _augmentation(self, is_train_augmentation: bool):
+    def _augmentation(self, is_train_augmentation: bool) -> Callable[[tf.Tensor, tf.Tensor], Tuple[tf.Tensor, tf.Tensor, tf.Tensor]]:
         
         def _map_function(x: tf.Tensor,y: tf.Tensor):
             # Apply train augmentation twice for contrastive learning
